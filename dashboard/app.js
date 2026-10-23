@@ -1,12 +1,86 @@
-const fmt=(x,n=3)=>x===null?'not measured':Number(x).toFixed(n);
-Promise.all([fetch('../artifacts/results.json').then(r=>r.json()),fetch('../artifacts/queue.json').then(r=>r.json())]).then(([r,rows])=>{
-const m=r.models[r.selected_model].holdout,p=r.review_policy;
-document.querySelector('#kpis').innerHTML=[[r.clean_rows,'Unique review sentences'],[fmt(m.accuracy),'200-row sentiment accuracy'],[fmt(m.macro_f1),'Holdout macro F1'],[r.human_issue_labels_collected,'New human issue labels']].map(([v,t])=>`<div class="kpi"><strong>${v}</strong><span>${t}</span></div>`).join('');
-document.querySelector('#models').innerHTML=Object.entries(r.models).map(([n,v])=>`<p>${n.replaceAll('_',' ')} ${n===r.selected_model?'/ selected':''}<br>Validation F1 ${fmt(v.validation.macro_f1)} / Holdout accuracy ${fmt(v.holdout.accuracy)}</p>`).join('');
-document.querySelector('#policy').textContent=`Confidence threshold ${fmt(p.threshold,2)}: accepts ${p.holdout_accepted}/200 (${fmt(100*p.holdout_coverage,1)}%), accepted accuracy ${fmt(p.holdout_accepted_accuracy)}.`;
-document.querySelector('#topics').innerHTML=r.topics.map(t=>`<p><b>Topic ${t.id}</b> / ${t.keywords.join(', ')}</p>`).join('');
-const topic=document.querySelector('#topic');r.topics.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=`Topic ${t.id}`;topic.append(o)});
-let limit=12;
-function render(){const items=rows.filter(x=>(!document.querySelector('#flagged').checked||x.sentiment_needs_review)&&(document.querySelector('#sentiment').value==='all'||x.predicted_sentiment===document.querySelector('#sentiment').value)&&(topic.value==='all'||String(x.topic)===topic.value)).sort((a,b)=>a.confidence-b.confidence);const queue=document.querySelector('#queue');queue.replaceChildren();items.slice(0,limit).forEach(x=>{const card=document.createElement('article');card.className='review';const h=document.createElement('h3');h.textContent=`Review ${x.review_id} / ${x.predicted_sentiment} / ${(100*x.confidence).toFixed(1)}% confidence`;const text=document.createElement('p');text.textContent=x.text;const evidence=document.createElement('p');evidence.textContent=`Issue proposal: ${x.category}. Evidence: ${x.evidence_spans.join(', ')||'none'}. Topic ${x.topic??'unassigned'}.`;const status=document.createElement('footer');status.textContent='Unreviewed / no human label / no validated severity';card.append(h,text,evidence,status);queue.append(card)});document.querySelector('#count').textContent=`Showing ${Math.min(limit,items.length)} of ${items.length} filtered reviews.`;document.querySelector('#more').disabled=limit>=items.length}
-for(const s of ['#flagged','#sentiment','#topic'])document.querySelector(s).onchange=()=>{limit=12;render()};document.querySelector('#more').onclick=()=>{limit+=12;render()};render();
-}).catch(()=>{document.querySelector('#kpis').textContent='Artifacts unavailable. Run the pipeline and serve the repository root.'});
+const fmt = (x, n = 3) => (x === null ? "not measured" : Number(x).toFixed(n));
+Promise.all([
+  fetch("../artifacts/results.json").then((r) => r.json()),
+  fetch("../artifacts/queue.json").then((r) => r.json()),
+])
+  .then(([r, rows]) => {
+    const m = r.models[r.selected_model].holdout,
+      p = r.review_policy;
+    document.querySelector("#kpis").innerHTML = [
+      [r.clean_rows, "Unique review sentences"],
+      [fmt(m.accuracy), "200-row sentiment accuracy"],
+      [fmt(m.macro_f1), "Holdout macro F1"],
+      [r.human_issue_labels_collected, "New human issue labels"],
+    ]
+      .map(
+        ([v, t]) =>
+          `<div class="kpi"><strong>${v}</strong><span>${t}</span></div>`,
+      )
+      .join("");
+    document.querySelector("#models").innerHTML = Object.entries(r.models)
+      .map(
+        ([n, v]) =>
+          `<p>${n.replaceAll("_", " ")} ${n === r.selected_model ? "/ selected" : ""}<br>Validation F1 ${fmt(v.validation.macro_f1)} / Holdout accuracy ${fmt(v.holdout.accuracy)}</p>`,
+      )
+      .join("");
+    document.querySelector("#policy").textContent =
+      `Confidence threshold ${fmt(p.threshold, 2)}: accepts ${p.holdout_accepted}/200 (${fmt(100 * p.holdout_coverage, 1)}%), accepted accuracy ${fmt(p.holdout_accepted_accuracy)}.`;
+    document.querySelector("#topics").innerHTML = r.topics
+      .map((t) => `<p><b>Topic ${t.id}</b> / ${t.keywords.join(", ")}</p>`)
+      .join("");
+    const topic = document.querySelector("#topic");
+    r.topics.forEach((t) => {
+      const o = document.createElement("option");
+      o.value = t.id;
+      o.textContent = `Topic ${t.id}`;
+      topic.append(o);
+    });
+    let limit = 12;
+    function render() {
+      const items = rows
+        .filter(
+          (x) =>
+            (!document.querySelector("#flagged").checked ||
+              x.sentiment_needs_review) &&
+            (document.querySelector("#sentiment").value === "all" ||
+              x.predicted_sentiment ===
+                document.querySelector("#sentiment").value) &&
+            (topic.value === "all" || String(x.topic) === topic.value),
+        )
+        .sort((a, b) => a.confidence - b.confidence);
+      const queue = document.querySelector("#queue");
+      queue.replaceChildren();
+      items.slice(0, limit).forEach((x) => {
+        const card = document.createElement("article");
+        card.className = "review";
+        const h = document.createElement("h3");
+        h.textContent = `Review ${x.review_id} / ${x.predicted_sentiment} / ${(100 * x.confidence).toFixed(1)}% confidence`;
+        const text = document.createElement("p");
+        text.textContent = x.text;
+        const evidence = document.createElement("p");
+        evidence.textContent = `Issue proposal: ${x.category}. Evidence: ${x.evidence_spans.join(", ") || "none"}. Topic ${x.topic ?? "unassigned"}.`;
+        const status = document.createElement("footer");
+        status.textContent =
+          "Unreviewed / no human label / no validated severity";
+        card.append(h, text, evidence, status);
+        queue.append(card);
+      });
+      document.querySelector("#count").textContent =
+        `Showing ${Math.min(limit, items.length)} of ${items.length} filtered reviews.`;
+      document.querySelector("#more").disabled = limit >= items.length;
+    }
+    for (const s of ["#flagged", "#sentiment", "#topic"])
+      document.querySelector(s).onchange = () => {
+        limit = 12;
+        render();
+      };
+    document.querySelector("#more").onclick = () => {
+      limit += 12;
+      render();
+    };
+    render();
+  })
+  .catch(() => {
+    document.querySelector("#kpis").textContent =
+      "Artifacts unavailable. Run the pipeline and serve the repository root.";
+  });
