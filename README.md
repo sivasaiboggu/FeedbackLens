@@ -38,7 +38,10 @@ and gets 124/140 correct (88.57%), below that target. Confidence is not a
 guarantee. All issue proposals still need review.
 
 **New human issue labels collected: 0. Issue-taxonomy accuracy: not measured.**
-The blind CSV and strict evaluation script are ready for actual independent
+A separate blind labeling page loads only holdout texts and IDs, never predictions
+or reference labels. Labels stay in tab memory and export with attribution and
+timestamps; closing the tab loses unsaved work. The blind CSV and strict
+evaluation script are ready for actual independent
 reviewers. A reviewer name in a CSV is self-reported, not authenticated. No
 expert-validation or human-in-the-loop improvement metric is claimed.
 
@@ -95,3 +98,10 @@ Optional browser smoke test: install `playwright-core` in a separate Node test
 workspace, run the local server, set `NODE_PATH` to its `node_modules`, then run
 `node tests/browser/smoke.cjs`. Set `CHROME_BIN` if Chrome is elsewhere. It checks
 mobile/desktop overflow and sentiment filtering; screenshots go to `/tmp`.
+
+The blind labeling page is `dashboard/blind-review.html`. It loads a separate
+artifact containing only the 200 IDs and texts, not model outputs or reference
+labels. Optional browser save/export regression:
+`node tests/browser/blind-review.cjs`. The test uses explicitly synthetic fixture
+attribution and never adds those labels to results. Design choices:
+[notes](docs/design-notes.md).

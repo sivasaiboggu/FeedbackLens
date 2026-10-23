@@ -79,6 +79,11 @@ class PipelineTests(unittest.TestCase):
             self.assertIn("not performed", result["identity_verification"])
             self.assertEqual(result["sentiment_accuracy"], 1.0)
 
+    def test_blind_page_artifact_contains_no_predictions_or_labels(self):
+        rows = json.loads((ROOT / "artifacts/blind_rows.json").read_text())
+        self.assertEqual(len(rows), 200)
+        self.assertTrue(all(set(row) == {"review_id", "text"} for row in rows))
+
     def test_review_policy_uses_validation(self):
         r = json.loads((ROOT / "artifacts/results.json").read_text())
         self.assertIn("validation only", r["review_policy"]["threshold_source"])

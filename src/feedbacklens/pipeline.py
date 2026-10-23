@@ -205,6 +205,9 @@ def run(root=ROOT):
         (root / f"artifacts/{name}.json").write_text(
             json.dumps(value, indent=2, allow_nan=False) + "\n"
         )
+    data.iloc[test][["review_id", "text"]].to_json(
+        root / "artifacts/blind_rows.json", orient="records", indent=2
+    )
     labels = data.iloc[test][["review_id", "sentiment"]].copy()
     labels["label_source"] = "publisher_manual_sentiment"
     labels.to_csv(root / "artifacts/reference_labels.csv", index=False)
