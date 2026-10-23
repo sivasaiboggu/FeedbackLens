@@ -4,7 +4,7 @@ A CPU-only customer-feedback intelligence prototype with SQL deduplication,
 sentiment model comparison, exploratory topics, evidence-backed issue proposals
 and a blind 200-item review workflow. The dashboard makes uncertainty visible.
 
-![Inspected local dashboard](docs/dashboard-desktop.png)
+![Inspected Streamlit dashboard](docs/streamlit-desktop.png)
 
 ## Business question
 
@@ -64,7 +64,8 @@ PYTHONPATH=src python -m feedbacklens.review path/to/reviewed.csv
 
 Python 3.10. No API key, paid model, cloud or GPU required. Pickled local model
 artifacts are generated, not downloaded; never load an untrusted joblib file.
-The dashboard is custom HTML, not Power BI or Tableau. No public hosting active.
+The primary dashboard is Streamlit + Plotly Express; the original HTML and blind
+annotation pages remain local fallbacks. Neither is Power BI or Tableau. No public hosting active.
 
 ## Architecture
 
@@ -105,3 +106,22 @@ labels. Optional browser save/export regression:
 `node tests/browser/blind-review.cjs`. The test uses explicitly synthetic fixture
 attribution and never adds those labels to results. Design choices:
 [notes](docs/design-notes.md).
+
+## Primary Streamlit + Plotly dashboard
+
+```sh
+# From this repository root, after installing requirements.txt:
+streamlit run streamlit_app.py --server.port 8781
+# Open http://127.0.0.1:8781
+```
+
+The single page has four KPI cards, four charts and one filtered table (five
+visuals excluding KPI cards). It uses the requested navy/orange/white theme in
+`.streamlit/config.toml`, with Plotly dark template and 20px chart titles. The
+app reads the existing artifacts, never retrains or tunes the model. Interactive
+filters and downloads do not change the frozen metrics. AppTest regression
+checks are included in the Python test suite. Desktop and mobile rendering
+were inspected. No Streamlit Cloud deployment or new remote service is active.
+
+The original HTML dashboard instructions above remain valid as a fallback;
+new Streamlit work does not claim to add Power BI, Tableau or expert labels.
