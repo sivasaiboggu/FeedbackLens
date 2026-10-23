@@ -1,0 +1,172 @@
+{
+  "dataset": "UCI Amazon cells subset only",
+  "source_rows": 1000,
+  "clean_rows": 987,
+  "duplicates_removed": 13,
+  "raw_sha256": "47003fc0a0d4840b00e96e715b6189bad09e7443a3da41c4cbe12ffc79f86ae3",
+  "splits": {
+    "train": 587,
+    "validation": 200,
+    "holdout": 200
+  },
+  "selected_model": "tfidf_naive_bayes",
+  "selection_metric": "validation macro F1",
+  "models": {
+    "tfidf_logistic": {
+      "validation": {
+        "accuracy": 0.8,
+        "macro_f1": 0.7992773986350863,
+        "brier": 0.14760096003199952,
+        "confusion_matrix": [
+          [
+            86,
+            14
+          ],
+          [
+            26,
+            74
+          ]
+        ]
+      },
+      "holdout": {
+        "accuracy": 0.775,
+        "macro_f1": 0.7747240369452579,
+        "brier": 0.16078202496703325,
+        "confusion_matrix": [
+          [
+            81,
+            20
+          ],
+          [
+            25,
+            74
+          ]
+        ]
+      }
+    },
+    "tfidf_naive_bayes": {
+      "validation": {
+        "accuracy": 0.8,
+        "macro_f1": 0.8,
+        "brier": 0.1437486075947437,
+        "confusion_matrix": [
+          [
+            80,
+            20
+          ],
+          [
+            20,
+            80
+          ]
+        ]
+      },
+      "holdout": {
+        "accuracy": 0.795,
+        "macro_f1": 0.7949948748718718,
+        "brier": 0.144149667848488,
+        "confusion_matrix": [
+          [
+            79,
+            22
+          ],
+          [
+            19,
+            80
+          ]
+        ]
+      }
+    }
+  },
+  "reference_labels": "publisher-provided manual sentiment labels, not new labels from Sivasai or an expert panel",
+  "human_issue_labels_collected": 0,
+  "issue_accuracy": null,
+  "review_policy": {
+    "threshold": 0.61,
+    "threshold_source": "validation only; target >=0.90 accuracy with >=40 accepted validation examples",
+    "holdout_accepted": 140,
+    "holdout_coverage": 0.7,
+    "holdout_accepted_accuracy": 0.8857142857142857
+  },
+  "topics": [
+    {
+      "id": 0,
+      "keywords": [
+        "phone",
+        "ve",
+        "best",
+        "new",
+        "like",
+        "worst",
+        "does"
+      ]
+    },
+    {
+      "id": 1,
+      "keywords": [
+        "great",
+        "works",
+        "price",
+        "worked",
+        "device",
+        "charger",
+        "item"
+      ]
+    },
+    {
+      "id": 2,
+      "keywords": [
+        "good",
+        "price",
+        "case",
+        "audio",
+        "fine",
+        "value",
+        "looks"
+      ]
+    },
+    {
+      "id": 3,
+      "keywords": [
+        "product",
+        "recommend",
+        "highly",
+        "don",
+        "happy",
+        "buy",
+        "excellent"
+      ]
+    },
+    {
+      "id": 4,
+      "keywords": [
+        "headset",
+        "sound",
+        "quality",
+        "ear",
+        "excellent",
+        "bluetooth",
+        "best"
+      ]
+    },
+    {
+      "id": 5,
+      "keywords": [
+        "battery",
+        "life",
+        "buy",
+        "service",
+        "disappointed",
+        "don",
+        "time"
+      ]
+    }
+  ],
+  "limitations": [
+    "No timestamps: no temporal trend",
+    "No revenue/exposure data: no money or risk estimate",
+    "Binary curated sentiment only; no neutral benchmark",
+    "No new expert validation; issue rules are not an LLM",
+    "Review selection is not a guarantee of accuracy"
+  ],
+  "baseline_holdout_accuracy": 0.505
+}
