@@ -1,0 +1,5 @@
+reference,prediction,rows
+negative,negative,79
+negative,positive,22
+positive,negative,19
+positive,positive,80

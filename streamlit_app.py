@@ -5,11 +5,14 @@ import sys
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import altair as alt
+from streamlit_extras.metric_cards import style_metric_cards
+from streamlit_option_menu import option_menu
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 from feedbacklens.evidence import load_dashboard, bundle_fingerprint
-NAVY, ORANGE, WHITE = "#0B1F33", "#FF5A1F", "#FFFFFF"
+CANVAS, ACCENT, TEXT = "#151D21", "#A8C4A2", "#F3F0E7"
 st.set_page_config(
     page_title="FeedbackLens | Evidence workbench", page_icon="📋", layout="wide"
 )
@@ -20,14 +23,15 @@ st.html("<style>" + (ROOT / "assets/fonts/fonts.css").read_text()
 
 
 def chart(fig):
+    """Use the same neutral/accent system across all Plotly views."""
     fig.update_layout(
         template="plotly_dark",
         title_font_size=20,
-        paper_bgcolor="#13304D",
-        plot_bgcolor="#13304D",
-        font=dict(family="DM Sans, sans-serif", color=WHITE, size=11),
+        paper_bgcolor="#202B30",
+        plot_bgcolor="#202B30",
+        font=dict(family="DM Sans, sans-serif", color=TEXT, size=11),
         title=dict(font=dict(family="DM Sans, sans-serif", size=20)),
-        colorway=[ORANGE, WHITE],
+        colorway=[ACCENT, TEXT],
         margin=dict(l=12, r=12, t=66, b=24),
         height=340,
     )
@@ -72,6 +76,9 @@ with st.container(key="kpi-strip"):
     ):
         col.metric(title, value)
 
+style_metric_cards(background_color="#202B30", border_color="#35413F",
+                   border_left_color="#A8C4A2", border_radius_px=10, box_shadow=False)
+
 st.caption(
     "Frozen 200-row holdout: 159 correct sentiment predictions. Selected by validation macro-F1, not holdout. Curated binary sentiment has no neutral benchmark."
 )
@@ -94,7 +101,7 @@ with left:
             y="Holdout accuracy (%)",
             range_y=[0, 100],
             title="Sentiment accuracy",
-            color_discrete_sequence=[ORANGE],
+            color_discrete_sequence=[ACCENT],
         )
     )
 with right:
@@ -106,7 +113,7 @@ with right:
             y=["Reference negative", "Reference positive"],
             text_auto=True,
             title="Where predictions miss",
-            color_continuous_scale=[NAVY, ORANGE],
+            color_continuous_scale=[CANVAS, ACCENT],
             aspect="auto",
         )
     )
@@ -129,7 +136,7 @@ with left:
             y="Decision",
             orientation="h",
             title="What goes to review",
-            color_discrete_sequence=[ORANGE],
+            color_discrete_sequence=[ACCENT],
             range_x=[0, 200],
         )
     )
@@ -142,21 +149,28 @@ with right:
         .rename_axis("Issue proposal")
         .reset_index(name="Holdout rows")
     )
-    chart(
-        px.bar(
-            counts,
-            x="Holdout rows",
-            y="Issue proposal",
-            orientation="h",
-            title="Proposed issue signals",
-            color_discrete_sequence=[ORANGE],
-        )
-    )
+    issue_chart = alt.Chart(counts).mark_bar(color=ACCENT, cornerRadiusEnd=3).encode(
+        x=alt.X("Holdout rows:Q", title="Holdout rows"),
+        y=alt.Y("Issue proposal:N", title=None, sort="-x"),
+        tooltip=["Issue proposal", "Holdout rows"],
+    ).properties(title="Proposed issue signals", height=290, padding={"left": 16, "right": 22, "top": 18, "bottom": 14}).configure(
+        background="#202B30", font="DM Sans"
+    ).configure_axis(labelColor=TEXT, titleColor=TEXT, gridColor="#35413F", domain=False).configure_title(
+        color=TEXT, fontSize=20, anchor="start", offset=24
+    ).configure_view(strokeOpacity=0)
+    st.altair_chart(issue_chart, use_container_width=True, theme=None)
+
     st.caption(
         "These are keyword-rule outputs, not validated issue prevalence, severity or financial risk."
     )
 
 st.subheader("Review queue")
+queue_order = option_menu(None, ["Lowest confidence", "Review ID"],
+    icons=["sort-numeric-down", "table"], orientation="horizontal", key="queue-order",
+    styles={"container":{"background-color":"#202B30","padding":"4px","border-radius":"8px"},
+            "icon":{"color":"#A8C4A2"}, "nav-link":{"font-size":"13px","color":"#F3F0E7","--hover-color":"#35413F"},
+            "nav-link-selected":{"background-color":"#35413F","color":"#F3F0E7"}})
+
 a, b, c = st.columns(3)
 with a:
     sentiment = st.selectbox("Predicted sentiment", ["All", "negative", "positive"])
@@ -171,9 +185,9 @@ if topic != "All":
     filtered = filtered[filtered.topic == int(topic)]
 if flagged:
     filtered = filtered[filtered.sentiment_needs_review]
-filtered = filtered.sort_values("confidence")
+filtered = filtered.sort_values("review_id" if queue_order == "Review ID" else "confidence")
 st.caption(
-    f"{len(filtered)} filtered rows. Lowest confidence first. No predictions are labeled as human-approved."
+    f"{len(filtered)} filtered rows. Queue order: {'review ID' if queue_order == 'Review ID' else 'lowest confidence'}. No predictions are labeled as human-approved."
 )
 st.dataframe(
     filtered[
