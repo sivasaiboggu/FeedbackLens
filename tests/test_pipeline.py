@@ -55,6 +55,30 @@ class PipelineTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluate_reviews(f)
 
+    def test_valid_synthetic_review_is_evaluated_with_self_reported_attribution(self):
+        # Fixture copies predictions intentionally to test mechanics, not accuracy.
+        # These labels are never added to the project's measured results.
+        queue = json.loads((ROOT / "artifacts/queue.json").read_text())
+        rows = [
+            {
+                "review_id": x["review_id"],
+                "sentiment_label": int(x["predicted_sentiment"] == "positive"),
+                "issue_label": (
+                    x["category"] if x["category"] != "needs_review" else "other"
+                ),
+                "reviewer": "SYNTHETIC TEST FIXTURE NOT A PERSON",
+                "reviewed_at": "2026-10-23T00:00:00Z",
+            }
+            for x in queue
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "test.csv"
+            pd.DataFrame(rows).to_csv(path, index=False)
+            result = evaluate_reviews(path)
+            self.assertEqual(result["rows"], 200)
+            self.assertIn("not performed", result["identity_verification"])
+            self.assertEqual(result["sentiment_accuracy"], 1.0)
+
     def test_review_policy_uses_validation(self):
         r = json.loads((ROOT / "artifacts/results.json").read_text())
         self.assertIn("validation only", r["review_policy"]["threshold_source"])
