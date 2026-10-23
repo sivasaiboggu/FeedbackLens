@@ -1,0 +1,10 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "results.json": "0d76f2019ef8053cfe50c3a3b9a35996bac56f5d8a98ac9018cbb910c3d21710",
+    "queue.json": "fa11682f0333eb48ca44e2edc0985ab441fbdd8bbccc0193c03aaaff90be36ae",
+    "splits.json": "7331f3e661c7f1c0159e5994022299b819b921fdfe8927f12c12e1139b03ce51",
+    "blind_rows.json": "06663a579b4ef26077d709af5b550883642589dd19b1eee8f3c4ef6777d9cd1b",
+    "blind_review_template.csv": "a47f101dbef9dc480c38a8186b2f1a349677a2c4d7c339078fcad908bca02ee6"
+  }
+}

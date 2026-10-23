@@ -1,19 +1,22 @@
 """Read-only feedback evidence dashboard from frozen evaluation artifacts."""
 
 from pathlib import Path
-import json
+import sys
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "src"))
+from feedbacklens.evidence import load_dashboard, bundle_fingerprint
 NAVY, ORANGE, WHITE = "#0B1F33", "#FF5A1F", "#FFFFFF"
 st.set_page_config(
     page_title="FeedbackLens | Evidence workbench", page_icon="📋", layout="wide"
 )
 
 
-st.html("<style>" + (ROOT / "dashboard.css").read_text() + "</style>")
+st.html("<style>" + (ROOT / "assets/fonts/fonts.css").read_text()
+        + (ROOT / "dashboard.css").read_text() + "</style>")
 
 
 def chart(fig):
@@ -37,18 +40,16 @@ def chart(fig):
 
 
 @st.cache_data
-def artifacts():
-    return (
-        json.loads((ROOT / "artifacts/results.json").read_text()),
-        pd.DataFrame(json.loads((ROOT / "artifacts/queue.json").read_text())),
-    )
+def artifacts(fingerprint):
+    """A changed bundle cannot reuse a previously checked cache entry."""
+    return load_dashboard(ROOT)
 
 
 st.html('<div class="masthead"><div class="wordmark"><span class="brandmark">f</span>FeedbackLens</div><div class="meta">Research workbench / 02</div></div>\n<div class="hero"><div><div class="eyebrow">Voice of customer / Amazon sentences</div><h1>More signal.<br><em>Human judgment intact.</em></h1><p>A closer read of customer feedback. Sentiment, emerging themes and a review queue that makes uncertainty visible.</p></div><div class="hero-aside"><div class="meta">The principle</div><strong>Review first.</strong><p>Model confidence is a routing signal, never a substitute for independent judgment.</p></div></div>\n<div class="boundary"><b>Evidence before automation.</b><span>Publisher-manual sentiment labels. Zero new human issue labels. Issue proposals use unvalidated keyword rules, not LLM extraction.</span></div>')
 try:
-    result, queue = artifacts()
-except (OSError, ValueError):
-    st.error("Artifacts unavailable. Run the documented pipeline first.")
+    result, queue = artifacts(bundle_fingerprint(ROOT))
+except (OSError, ValueError, KeyError, TypeError):
+    st.error("Evidence bundle is missing or inconsistent. See the README verification steps.")
     st.stop()
 measured = result["models"][result["selected_model"]]["holdout"]
 policy = result["review_policy"]

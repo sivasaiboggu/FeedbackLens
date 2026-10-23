@@ -6,6 +6,10 @@ and a blind 200-item review workflow. The dashboard makes uncertainty visible.
 
 ![Inspected Streamlit dashboard](docs/streamlit-desktop.png)
 
+**Reviewer map:** [results](#honest-measured-results) · [run](#start-here) ·
+[architecture and decisions](docs/reviewer-guide.md) · [data card](docs/data-card.md) ·
+[design notes](docs/design-notes.md).
+
 ## Business question
 
 Which product experiences should an analyst investigate, and which automated
@@ -45,27 +49,46 @@ evaluation script are ready for actual independent
 reviewers. A reviewer name in a CSV is self-reported, not authenticated. No
 expert-validation or human-in-the-loop improvement metric is claimed.
 
-## Run locally
+## Start here
+
+Python 3.10, CPU only. No cloud account, provider key or paid service is needed.
+The checked-in artifacts are sufficient to explore the dashboard. Training is a
+separate, explicit command, not part of app startup.
 
 ```sh
 python -m venv .venv
 . .venv/bin/activate
-pip install -r requirements.txt
-# Pinned, attributed source subset is included; optional checksum refresh:
-python scripts/download_data.py
-PYTHONPATH=src python -m feedbacklens.pipeline
-PYTHONPATH=src python -m unittest discover -s tests -v
-PYTHONPATH=src python -m feedbacklens.predict 'The battery stopped charging.'
-python -m http.server 8771 --bind 127.0.0.1
-# Open http://127.0.0.1:8771/dashboard/
-# After an actual reviewer labels the complete blind template:
-PYTHONPATH=src python -m feedbacklens.review path/to/reviewed.csv
+python -m pip install -r requirements.txt
+python scripts/verify_artifacts.py
+streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8781
+# Open http://127.0.0.1:8781
 ```
 
-Python 3.10. No API key, paid model, cloud or GPU required. Pickled local model
-artifacts are generated, not downloaded; never load an untrusted joblib file.
-The primary dashboard is Streamlit + Plotly Express; the original HTML and blind
-annotation pages remain local fallbacks. Neither is Power BI or Tableau. No public hosting active.
+### Reproduce and test
+
+```sh
+# Source data is pinned and attributed; download is optional.
+python scripts/download_data.py
+PYTHONPATH=src python -m feedbacklens.pipeline
+python scripts/verify_artifacts.py
+PYTHONPATH=src python -m unittest discover -s tests -v
+```
+
+The verification command checks the versioned SHA-256 manifest and population
+constraints before the app reads the evidence. It catches mixed/missing files;
+it does not authenticate a dataset author or make a retrained model equivalent.
+If a rerun differs, inspect the source checksum, dependency versions, split IDs
+and generated diff. Do not replace the manifest merely to silence a failure.
+Review and version any intentional new evidence separately, without selecting
+against the existing holdout. See [reviewer guide](docs/reviewer-guide.md).
+
+Optional inference after local training:
+`PYTHONPATH=src python -m feedbacklens.predict 'The battery stopped charging.'`
+Never load an untrusted joblib file. Optional HTML and blind-review pages:
+`python -m http.server 8771 --bind 127.0.0.1`, then `/dashboard/` or
+`/dashboard/blind-review.html`. After actual independent annotation, run
+`PYTHONPATH=src python -m feedbacklens.review path/to/reviewed.csv`.
+No public hosting, Power BI or Tableau implementation is claimed.
 
 ## Architecture
 
@@ -142,3 +165,12 @@ Design references, used for direction rather than copied templates:
 [Recent](https://recent.design), [Font In Logo](https://fontinlogo.com), and
 [Footer Design](https://footer.design). The interface is an original local
 implementation, not an endorsement or a purchased template.
+
+## Checks and change policy
+
+The GitHub Actions workflow verifies the committed evidence and runs the Python
+tests on Python 3.10. It never trains, replaces artifacts or deploys. Local test
+results are reported separately; a new workflow is not a claim that hosted CI
+has already passed. Intentional evidence updates need a reviewed artifact diff,
+source/split provenance and a separate evaluation decision. Presentation changes
+should not change data/model files or the metrics they display.
