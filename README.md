@@ -4,6 +4,8 @@ A CPU-only customer-feedback intelligence prototype with SQL deduplication,
 sentiment model comparison, exploratory topics, evidence-backed issue proposals
 and a blind 200-item review workflow. The dashboard makes uncertainty visible.
 
+![Inspected local dashboard](docs/dashboard-desktop.png)
+
 ## Business question
 
 Which product experiences should an analyst investigate, and which automated
