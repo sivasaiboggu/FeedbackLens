@@ -1,5 +1,6 @@
 """Synthetic corruption checks. Never alter the repository evidence."""
 import json
+import hashlib
 import shutil
 import tempfile
 import unittest
@@ -44,3 +45,46 @@ class EvidenceTests(unittest.TestCase):
             self.assertNotEqual(before, bundle_fingerprint(root))
             with self.assertRaisesRegex(ValueError, "checksum mismatch"):
                 load_dashboard(root)
+
+    def rewrite_fixture(self, root, filename, data):
+        """Rehash only a disposable fixture to exercise semantic validation."""
+        path = root / "artifacts" / filename
+        path.write_text(data)
+        manifest_path = root / "artifacts/manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["files"][filename] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest))
+
+    def test_blind_bundle_rejects_prediction_fields_even_with_matching_hash(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            shutil.copytree(ROOT / "artifacts", root / "artifacts")
+            rows = json.loads((root / "artifacts/blind_rows.json").read_text())
+            rows[0]["predicted_sentiment"] = "synthetic"
+            self.rewrite_fixture(root, "blind_rows.json", json.dumps(rows))
+            with self.assertRaisesRegex(ValueError, "non-blind"):
+                load_dashboard(root)
+
+    def test_blind_id_mismatch_is_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            shutil.copytree(ROOT / "artifacts", root / "artifacts")
+            rows = json.loads((root / "artifacts/blind_rows.json").read_text())
+            rows[0]["review_id"] = -999
+            self.rewrite_fixture(root, "blind_rows.json", json.dumps(rows))
+            with self.assertRaisesRegex(ValueError, "IDs do not match"):
+                load_dashboard(root)
+
+    def test_invalid_confidence_and_duplicate_population_are_rejected(self):
+        for mutation, message in [("confidence", "confidence"), ("duplicate", "population")]:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                shutil.copytree(ROOT / "artifacts", root / "artifacts")
+                rows = json.loads((root / "artifacts/queue.json").read_text())
+                if mutation == "confidence":
+                    rows[0]["confidence"] = 2
+                else:
+                    rows[0]["review_id"] = rows[1]["review_id"]
+                self.rewrite_fixture(root, "queue.json", json.dumps(rows))
+                with self.assertRaisesRegex(ValueError, message):
+                    load_dashboard(root)
