@@ -200,3 +200,12 @@ SHA-256 values are validated before reading files. Two synthetic regressions
 cover omitted required files and malformed manifests. Frozen artifacts, splits,
 metrics and Power BI exports are unchanged. This checks accidental bundle mixing,
 not authenticity against an actor who can replace both source and manifest.
+
+
+### Frozen split membership
+
+Dashboard loading also checks unique integer split IDs, disjoint train/validation/
+holdout membership, and exact agreement between displayed rows and frozen holdout
+IDs. Matching file hashes alone no longer admit a semantically mixed population.
+One additional regression per project mutates only disposable split fixtures;
+real split assignments, metrics and labels remain unchanged.
