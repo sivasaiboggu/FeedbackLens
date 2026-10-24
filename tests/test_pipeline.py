@@ -88,3 +88,18 @@ class PipelineTests(unittest.TestCase):
         r = json.loads((ROOT / "artifacts/results.json").read_text())
         self.assertIn("validation only", r["review_policy"]["threshold_source"])
         self.assertEqual(r["splits"]["holdout"], 200)
+
+
+    def test_review_evaluation_rejects_modified_prediction_bundle(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);shutil.copytree(ROOT / "artifacts",root / "artifacts")
+            queue=json.loads((root / "artifacts/queue.json").read_text())
+            rows=[{"review_id":row["review_id"],"sentiment_label":0,"issue_label":"other", "reviewer":"SYNTHETIC TEST FIXTURE", "reviewed_at":"2026-10-23T00:00:00Z"} for row in queue]
+            labels=root / "labels.csv";pd.DataFrame(rows).to_csv(labels,index=False)
+            queue[0]["predicted_sentiment"]="positive"
+            # Force a byte change even if the original prediction was positive.
+            queue[0]["text"]="Synthetic changed fixture"
+            (root / "artifacts/queue.json").write_text(json.dumps(queue))
+            with self.assertRaisesRegex(ValueError,"checksum mismatch"):
+                evaluate_reviews(labels,root)

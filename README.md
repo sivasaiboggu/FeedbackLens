@@ -209,3 +209,12 @@ holdout membership, and exact agreement between displayed rows and frozen holdou
 IDs. Matching file hashes alone no longer admit a semantically mixed population.
 One additional regression per project mutates only disposable split fixtures;
 real split assignments, metrics and labels remain unchanged.
+
+
+### Review evaluation uses the checked bundle
+
+Independently submitted label evaluation now loads the same integrity-checked,
+split-validated prediction bundle as the dashboard, instead of reading queue.json
+directly. A synthetic regression confirms altered predictions cannot silently
+produce a new comparison score. Reviewer attribution remains self-reported; this
+adds no human labels or expert validation and changes no frozen measurements.

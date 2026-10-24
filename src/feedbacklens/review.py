@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 from .pipeline import ROOT, TAXONOMY
+from .evidence import load_dashboard
 
 
 def evaluate_reviews(path, root=ROOT):
@@ -33,7 +34,7 @@ def evaluate_reviews(path, root=ROOT):
         raise ValueError("Reviewer and timestamp required")
     if pd.to_datetime(labels.reviewed_at, errors="coerce", utc=True).isna().any():
         raise ValueError("Invalid review timestamp")
-    queue = pd.DataFrame(json.loads((root / "artifacts/queue.json").read_text()))
+    _, queue = load_dashboard(root)
     if set(labels.review_id) != set(queue.review_id):
         raise ValueError("IDs do not match the frozen holdout")
     merged = queue.merge(labels, on="review_id", validate="one_to_one")
